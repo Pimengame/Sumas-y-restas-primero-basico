@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magia del 10 - Con Voz del Búho</title>
+    <title>Magia del 10 - Resta Comprensiva</title>
     <style>
         body { 
             font-family: 'Comic Sans MS', cursive, sans-serif; 
@@ -17,12 +17,8 @@
         .subtitle { color: #555; font-size: 18px; margin-bottom: 20px;}
         
         .game-board {
-            background-color: white;
-            max-width: 800px;
-            margin: 0 auto;
-            border-radius: 20px;
-            padding: 20px 30px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            background-color: white; max-width: 800px; margin: 0 auto;
+            border-radius: 20px; padding: 20px 30px; box-shadow: 0 8px 20px rgba(0,0,0,0.15);
             min-height: 500px;
         }
 
@@ -56,8 +52,6 @@
             position: relative;
         }
         .owl { font-size: 45px; }
-        
-        /* Botón para que el búho repita lo que dijo */
         .btn-hablar {
             background-color: #ff9800; border: none; border-radius: 50%; width: 45px; height: 45px;
             font-size: 24px; cursor: pointer; display: flex; justify-content: center; align-items: center;
@@ -83,12 +77,16 @@
             width: 40px; height: 40px; border: 2px solid #e0e0e0; border-radius: 5px;
             display: flex; justify-content: center; align-items: center; font-size: 26px; transition: all 0.2s;
         }
-        .cell.removed { 
-            opacity: 0.3; transform: scale(0.8); filter: grayscale(100%); position: relative;
-        }
+        
+        /* Efecto interactivo de manzanas tachadas */
+        .cell.removed { opacity: 0.4; transform: scale(0.85); filter: grayscale(100%); position: relative; }
         .cell.removed::after {
             content: ''; position: absolute; width: 100%; height: 5px; background-color: #e53935;
-            transform: rotate(-45deg); border-radius: 3px;
+            transform: rotate(-45deg); border-radius: 3px; box-shadow: 0 0 3px rgba(255,255,255,0.8);
+        }
+        .cell.removed::before {
+            content: ''; position: absolute; width: 100%; height: 5px; background-color: #e53935;
+            transform: rotate(45deg); border-radius: 3px; box-shadow: 0 0 3px rgba(255,255,255,0.8);
         }
 
         /* --- ZONA MATEMÁTICA --- */
@@ -108,6 +106,11 @@
         }
         input:focus { outline: none; border-style: solid; background-color: #fff; }
         input:disabled { background-color: #eeeeee; border: 3px solid #bdbdbd; color: #9e9e9e; }
+        
+        .labels-row {
+            display: flex; gap: 10px; font-size: 13px; color: #666; margin-top: 5px; justify-content: center; font-weight: normal;
+        }
+        .lbl-box { width: 55px; text-align: center; line-height: 1.1; }
 
         /* --- FILA MÁGICA DEL 10 --- */
         .magic-row {
@@ -189,7 +192,12 @@
                     <div class="ramas">/ \</div>
                     <div class="inputs-row">
                         <input type="number" id="parte1" placeholder="?" min="0" oninput="actualizarVisualesTiempoReal()">
-                        <input type="number" id="parte2" placeholder="?" min="0">
+                        <input type="number" id="parte2" placeholder="?" min="0" oninput="actualizarVisualesTiempoReal()">
+                    </div>
+                    <!-- NUEVAS ETIQUETAS GUÍA -->
+                    <div class="labels-row">
+                        <div class="lbl-box" id="lbl1"></div>
+                        <div class="lbl-box" id="lbl2"></div>
                     </div>
                 </div>
             </div>
@@ -218,36 +226,22 @@
         let pasoActual = 1;
         const emoji = '🍎';
         
-        // ==========================================
-        // SISTEMA DE VOZ DEL BÚHO (TEXT-TO-SPEECH)
-        // ==========================================
+        // --- VOZ ---
         function cambiarTextoYHablar(nuevoHTML) {
             document.getElementById('textoProfesor').innerHTML = nuevoHTML;
             hablarBúho();
         }
 
         function hablarBúho() {
-            // Cancelar si ya estaba hablando
             window.speechSynthesis.cancel();
-
-            // Obtener el texto del búho y quitarle las etiquetas HTML (como <b> o <br>) para que no las lea
-            let textoHtml = document.getElementById('textoProfesor').innerHTML;
-            let textoLimpio = textoHtml.replace(/<[^>]*>?/gm, ' '); // Cambia etiquetas por espacios
-
-            // Crear el mensaje de voz
+            let textoLimpio = document.getElementById('textoProfesor').innerHTML.replace(/<[^>]*>?/gm, ' ');
             let mensaje = new SpeechSynthesisUtterance(textoLimpio);
-            
-            // Configuración para que suene amigable para niños
-            mensaje.lang = 'es-CL'; // Intenta usar español de Chile si está disponible (si no, usa el normal)
-            mensaje.rate = 0.9;     // Un poco más lento para que se entienda bien
-            mensaje.pitch = 1.3;    // Tono un poco más agudo, como un personaje animado
-
+            mensaje.lang = 'es-CL'; mensaje.rate = 0.9; mensaje.pitch = 1.3;
             window.speechSynthesis.speak(mensaje);
         }
-        // ==========================================
 
         function volverMenu() {
-            window.speechSynthesis.cancel(); // Silenciar al salir
+            window.speechSynthesis.cancel();
             document.getElementById('pantalla-juego').classList.remove('active');
             document.getElementById('pantalla-menu').classList.add('active');
             document.getElementById('board').className = 'game-board';
@@ -262,11 +256,15 @@
                 document.getElementById('signo-visual').innerText = '➖';
                 document.getElementById('signo-matematico').innerText = '−';
                 document.getElementById('signo-magico').innerText = '−';
+                document.getElementById('lbl1').innerText = "Quitar sueltos";
+                document.getElementById('lbl2').innerText = "Quitar al 10";
             } else {
                 document.getElementById('board').classList.remove('modo-resta');
                 document.getElementById('signo-visual').innerText = '➕';
                 document.getElementById('signo-matematico').innerText = '+';
                 document.getElementById('signo-magico').innerText = '+';
+                document.getElementById('lbl1').innerText = "Para el 10";
+                document.getElementById('lbl2').innerText = "Lo que sobra";
             }
         }
 
@@ -288,10 +286,17 @@
             }
         }
 
+        // ==========================================
+        // ACTUALIZACIÓN VISUAL MEJORADA (DOBLE ENTRADA)
+        // ==========================================
         function actualizarVisualesTiempoReal() {
             if (pasoActual !== 1 || esTutorial) return;
+            
             let inputP1 = parseInt(document.getElementById('parte1').value);
             if (isNaN(inputP1) || inputP1 < 0) inputP1 = 0;
+            
+            let inputP2 = parseInt(document.getElementById('parte2').value);
+            if (isNaN(inputP2) || inputP2 < 0) inputP2 = 0;
 
             let caja1 = document.getElementById('caja1');
 
@@ -302,9 +307,17 @@
                 dibujarCaja('caja2', manzanasCaja2, 10);
                 if (manzanasCaja1 === 10) { caja1.classList.add('full'); } else { caja1.classList.remove('full'); }
             } else {
+                // LÓGICA DE RESTA: EL NIÑO VE EXACTAMENTE LO QUE ESTÁ QUITANDO
                 let sueltos = n1 - 10;
+                
+                // Lo que pone en la parte 1, tacha los sueltos (Caja 2)
                 let tacharCajaSueltos = Math.min(inputP1, sueltos);
-                let tacharCajaPrincipal = Math.max(0, inputP1 - sueltos);
+                
+                // Lo que pone en la parte 2, tacha a la Caja 10 (Caja 1)
+                let tacharCajaPrincipal = Math.min(inputP2, 10);
+                
+                // Efecto de error: Si pone demasiados sueltos, se pasan a tachar a la principal
+                if (inputP1 > sueltos) tacharCajaPrincipal += (inputP1 - sueltos);
 
                 dibujarCaja('caja2', sueltos, 10, tacharCajaSueltos);
                 dibujarCaja('caja1', 10, 10, tacharCajaPrincipal);
@@ -330,7 +343,7 @@
             if (modo === 'suma') {
                 cambiarTextoYHablar(`<b>EJEMPLO DE SUMA:</b> Para sumar 8 más 5, primero convertimos el 8 en un 10. ¿Cuánto le falta al 8? Le faltan <b>2</b>. Haz clic en "Siguiente Paso".`);
             } else {
-                cambiarTextoYHablar(`<b>EJEMPLO DE RESTA:</b> Para restar 14 menos 6, primero retrocedemos hasta el 10. Para que el 14 baje a 10, debemos tachar sus <b>4</b> manzanas sueltas. Haz clic en "Siguiente".`);
+                cambiarTextoYHablar(`<b>EJEMPLO DE RESTA:</b> Tenemos que tachar <b>6</b> manzanas en total. Primero, desarmemos el 6. En el primer cuadro pondremos las <b>4</b> manzanas sueltas para tacharlas. Haz clic en "Siguiente".`);
             }
             document.getElementById('btnAccion').innerText = "Siguiente Paso ➡";
         }
@@ -359,7 +372,7 @@
                 document.getElementById('titulo-caja1').innerText = "Hay " + n1;
                 document.getElementById('titulo-caja2').innerText = "Hay " + n2;
                 
-                if (!esTutorial) cambiarTextoYHablar(`<b>¡Escribe en el primer cuadro y mira la magia!</b> ¿Cuántas manzanas necesita el <b>${n1}</b> para llegar a 10?`);
+                if (!esTutorial) cambiarTextoYHablar(`Queremos formar un 10. Desarma el <b>${n2}</b>: en el primer cuadro pon lo que le falta al <b>${n1}</b>.`);
             } else {
                 p1_correcto = n1 - 10; p2_correcto = n2 - p1_correcto; resultado_correcto = n1 - n2;
                 dibujarCaja('caja1', 10); dibujarCaja('caja2', n1 - 10);
@@ -368,7 +381,7 @@
                 document.getElementById('titulo-caja1').innerText = "Unidad de 10";
                 document.getElementById('titulo-caja2').innerText = "Sueltos: " + (n1 - 10);
                 
-                if (!esTutorial) cambiarTextoYHablar(`<b>¡Escribe en el primer cuadro para tachar manzanas!</b> ¿Cuántas manzanas sueltas debes quitar para quedarte solo con la caja de 10?`);
+                if (!esTutorial) cambiarTextoYHablar(`¡Atención! Tenemos que tachar <b>${n2}</b> manzanas en total. Desarma el <b>${n2}</b>: en el primer cuadro pon las sueltas que vas a tachar, y en el segundo pon las que faltan por tachar.`);
             }
 
             document.getElementById('num1').innerText = n1; document.getElementById('num2').innerText = n2;
@@ -408,15 +421,15 @@
                 } else {
                     dibujarCaja('caja2', p1_correcto, 10, p1_correcto); 
                     dibujarCaja('caja1', 10, 10, p2_correcto); 
-                    cambiarTextoYHablar(`¡Mira! Al quitarle ${p1_correcto} sueltos bajamos a 10. Pero la Fila Mágica dice que aún debemos tachar <b>${p2_correcto}</b> del 10. ¡Cuenta las que quedan sin tachar!`);
+                    cambiarTextoYHablar(`Como debíamos tachar ${n2} en total, desarmamos el ${n2} en ${p1_correcto} y ${p2_correcto}. Tachamos los sueltos y luego le tachamos ${p2_correcto} al número 10. ¡Cuenta las manzanas vivas!`);
                 }
                 
             } else if (pasoActual === 2) {
                 document.getElementById('resultadoFinal').value = resultado_correcto;
                 if (modoJuego === 'suma') {
-                    cambiarTextoYHablar(`¡Excelente! 10 más ${p2_correcto} es igual a <b>${resultado_correcto}</b>. ¡Acabas de aprender la magia de sumar con 10!`);
+                    cambiarTextoYHablar(`¡Excelente! 10 más ${p2_correcto} es igual a <b>${resultado_correcto}</b>.`);
                 } else {
-                    cambiarTextoYHablar(`¡Así es! Si a 10 le quitamos ${p2_correcto}, nos quedan <b>${resultado_correcto}</b> manzanas vivas. ¡Acabas de aprender la magia de restar volviendo al 10!`);
+                    cambiarTextoYHablar(`¡Así es! Si a 10 le quitamos ${p2_correcto}, nos quedan <b>${resultado_correcto}</b> manzanas vivas.`);
                 }
                 document.getElementById('btnAccion').innerText = "Volver al Menú"; pasoActual = 3;
             } else if (pasoActual === 3) { volverMenu(); }
@@ -426,11 +439,7 @@
             let msj = document.getElementById('mensaje');
             if (pasoActual === 1) {
                 let p1 = parseInt(document.getElementById('parte1').value); let p2 = parseInt(document.getElementById('parte2').value);
-                if (isNaN(p1) || isNaN(p2)) { 
-                    msj.innerText = "¡Escribe los números primero! ✏️"; msj.className = "feedback wrong"; 
-                    // No hacemos que el búho hable aquí para no ser molestos con los errores rápidos
-                    return; 
-                }
+                if (isNaN(p1) || isNaN(p2)) { msj.innerText = "¡Escribe los números primero! ✏️"; msj.className = "feedback wrong"; return; }
 
                 if (p1 === p1_correcto && p2 === p2_correcto) {
                     msj.innerText = "¡Bien hecho!"; msj.className = "feedback correct";
@@ -445,12 +454,12 @@
                         dibujarCaja('caja2', p1_correcto, 10, p1_correcto); 
                         dibujarCaja('caja1', 10, 10, p2_correcto); 
                         document.getElementById('titulo-caja2').innerText = "¡Suprimidos!";
-                        cambiarTextoYHablar(`¡Genial! Tachaste los ${p1_correcto} sueltos. Ahora mira la <b>Fila Mágica</b>: debes tacharle <b>${p2_correcto}</b> a la caja principal. ¡Cuenta las manzanas que quedaron!`);
+                        cambiarTextoYHablar(`¡Misión cumplida! Si cuentas las cruces rojas, verás que tachaste exactamente <b>${n2}</b> manzanas en total. Ahora resuelve la Fila Mágica contando las manzanas vivas.`);
                     }
                 } else if (p1 + p2 !== n2) {
-                    msj.innerText = `Los dos números de abajo deben sumar ${n2} 🧐`; msj.className = "feedback wrong";
-                } else {
-                    msj.innerText = modoJuego === 'suma' ? `Fíjate cuánto le falta al ${n1} para llenar su caja.` : `Debes tachar todas las manzanas sueltas primero.`;
+                    msj.innerText = `¡Cuidado! Desarmaste mal el número. Las dos partes deben sumar ${n2} en total.`; msj.className = "feedback wrong";
+                } else if (p1 !== p1_correcto) {
+                    msj.innerText = modoJuego === 'suma' ? `Para llegar a 10, el primer número debe ser exactamente ${p1_correcto}.` : `En el primer cuadro debes poner EXACTAMENTE las manzanas sueltas (${p1_correcto}) para tacharlas todas.`;
                     msj.className = "feedback wrong";
                 }
             } else if (pasoActual === 2) {
