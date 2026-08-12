@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magia del 10 - Visual y Perfecto</title>
+    <style>
+        body { 
+            font-family: 'Comic Sans MS', cursive, sans-serif; 
+            background-color: #e8f5e9; 
+            text-align: center; 
+            color: #333; 
+            margin: 0;
+            padding: 10px;
+        }
+        h1 { color: #2e7d32; margin-bottom: 5px; font-size: 36px;}
+        .subtitle { color: #555; font-size: 18px; margin-bottom: 20px;}
+        
+        .game-board {
+            background-color: white;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: 20px;
+            padding: 20px 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            min-height: 500px;
+        }
+
+        /* --- PANTALLAS --- */
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        /* --- MENÚ PRINCIPAL --- */
+        .menu-buttons { display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 30px; }
+        .btn-menu {
+            width: 300px; padding: 15px; font-size: 22px; border-radius: 30px;
+            cursor: pointer; border: none; color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: transform 0.1s;
+        }
+        .btn-menu:active { transform: scale(0.95); }
+        .btn-suma { background-color: #43a047; }
+        .btn-resta { background-color: #e53935; }
+        .btn-tuto-suma { background-color: #81c784; color: #1b5e20; border: 3px solid #43a047;}
+        .btn-tuto-resta { background-color: #ef9a9a; color: #b71c1c; border: 3px solid #e53935;}
+        
+        .btn-volver {
+            background-color: #9e9e9e; color: white; border: none; padding: 10px 20px;
+            border-radius: 20px; cursor: pointer; font-size: 16px; margin-bottom: 15px; float: left;
+        }
+
+        /* --- EL BÚHO --- */
+        .teacher-box {
+            background-color: #fff9c4; border: 3px solid #fbc02d; border-radius: 15px;
+            padding: 15px; font-size: 18px; color: #d84315; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 15px; text-align: left; clear: both;
+        }
+        .owl { font-size: 45px; }
+
+        /* --- ZONA VISUAL (Cajas de 10) --- */
+        .visual-area {
+            display: flex; justify-content: center; gap: 30px; margin-bottom: 20px;
+            padding: 15px; background-color: #f1f8e9; border-radius: 15px; border: 2px dashed #a5d6a7;
+        }
+        .frame-container { display: flex; flex-direction: column; align-items: center; }
+        .frame-title { font-size: 16px; font-weight: bold; color: #555; margin-bottom: 5px; }
+        
+        .ten-frame {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background-color: #fff;
+            padding: 5px; border: 3px solid #7cb342; border-radius: 8px; transition: all 0.5s ease;
+        }
+        .ten-frame.full { border-color: #fbc02d; background-color: #fffde7; box-shadow: 0 0 15px rgba(251, 192, 45, 0.6); }
+        .cell {
+            width: 40px; height: 40px; border: 2px solid #e0e0e0; border-radius: 5px;
+            display: flex; justify-content: center; align-items: center; font-size: 26px; transition: all 0.3s;
+        }
+        
+        /* Efecto de manzanas eliminadas en la resta */
+        .cell.removed { 
+            opacity: 0.3; 
+            transform: scale(0.8); 
+            filter: grayscale(100%);
+            position: relative;
+        }
+        /* Línea roja tachando la manzana */
+        .cell.removed::after {
+            content: ''; position: absolute; width: 100%; height: 4px; background-color: #e53935;
+            transform: rotate(-45deg); border-radius: 2px;
+        }
+
+        /* --- ZONA MATEMÁTICA --- */
+        .math-container {
+            display: flex; justify-content: center; align-items: flex-start; font-size: 50px; 
+            font-weight: bold; color: #283593; gap: 15px; transition: all 0.5s;
+        }
+        .num-main { margin-top: 10px; transition: all 0.5s;}
+        .num-group { display: flex; flex-direction: column; align-items: center; }
+        .ramas { font-size: 35px; color: #9e9e9e; letter-spacing: 15px; margin-top: -15px; margin-bottom: -5px; }
+        .inputs-row { display: flex; gap: 10px; }
+
+        input {
+            width: 55px; height: 55px; font-size: 28px; text-align: center;
+            border: 3px dashed #ab47bc; border-radius: 12px;
+            background-color: #fdf3ff; color: #4a148c; font-family: inherit;
+        }
+        input:focus { outline: none; border-style: solid; }
+        input:disabled { background-color: #eeeeee; border: 3px solid #bdbdbd; color: #9e9e9e; }
+
+        /* --- FILA MÁGICA DEL 10 --- */
+        .magic-row {
+            background-color: #fffde7; border: 3px dashed #fbc02d; border-radius: 15px;
+            padding: 15px 20px; margin-top: 15px; margin-bottom: 20px; align-items: center;
+        }
+        .magic-ten { color: #fbc02d; font-size: 60px; text-shadow: 2px 2px 0px #fff, -1px -1px 0px #fff; }
+        .result-box input { border-color: #4caf50; background-color: #e8f5e9; color: #1b5e20; width: 75px; }
+        
+        .cross-out { text-decoration: line-through; opacity: 0.4; transform: scale(0.9); }
+
+        .btn-accion {
+            padding: 12px 25px; font-size: 20px; font-family: inherit;
+            background-color: #ff9800; color: white; border: none; border-radius: 30px; 
+            cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2); margin-top: 10px;
+        }
+        .btn-accion:hover { background-color: #f57c00; }
+        .feedback { font-size: 22px; font-weight: bold; margin-top: 10px; min-height: 30px;}
+        .correct { color: #2e7d32; }
+        .wrong { color: #d32f2f; }
+
+        /* Estilos Restas */
+        .modo-resta .ten-frame { border-color: #e57373; }
+        .modo-resta input { border-color: #ef5350; background-color: #ffebee; color: #b71c1c; }
+        .modo-resta .math-container { color: #b71c1c; }
+        .modo-resta .magic-row { background-color: #ffebee; border-color: #ef5350; }
+        .modo-resta .magic-ten { color: #ef5350; }
+    </style>
+</head>
+<body>
+
+    <h1>✨ El Truco del 10 ✨</h1>
+    <p class="subtitle">Aprende a sumar y restar desarmando números</p>
+    
+    <div class="game-board" id="board">
+        
+        <!-- PANTALLA MENÚ -->
+        <div id="pantalla-menu" class="screen active">
+            <h2>¿Qué quieres hacer hoy?</h2>
+            <div class="menu-buttons">
+                <button class="btn-menu btn-tuto-suma" onclick="iniciarTutorial('suma')">📖 Ver Ejemplo de Suma</button>
+                <button class="btn-menu btn-suma" onclick="prepararJuego('suma')">➕ Jugar a Sumar</button>
+                <br>
+                <button class="btn-menu btn-tuto-resta" onclick="iniciarTutorial('resta')">📖 Ver Ejemplo de Resta</button>
+                <button class="btn-menu btn-resta" onclick="prepararJuego('resta')">➖ Jugar a Restar</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA JUEGO -->
+        <div id="pantalla-juego" class="screen">
+            <button class="btn-volver" onclick="volverMenu()">⬅ Volver al Menú</button>
+            
+            <div class="teacher-box">
+                <div class="owl">🦉</div>
+                <div id="textoProfesor">...</div>
+            </div>
+            
+            <!-- CAJAS DE 10 -->
+            <div class="visual-area">
+                <div class="frame-container">
+                    <div class="frame-title" id="titulo-caja1">Primera Caja</div>
+                    <div class="ten-frame" id="caja1"></div>
+                </div>
+                <div style="font-size: 40px; font-weight: bold; margin-top: 30px;" id="signo-visual">+</div>
+                <div class="frame-container">
+                    <div class="frame-title" id="titulo-caja2">Segunda Caja</div>
+                    <div class="ten-frame" id="caja2"></div>
+                </div>
+            </div>
+
+            <!-- FILA 1: DESCOMPOSICIÓN -->
+            <div class="math-container" id="fila-descomposicion">
+                <div class="num-main" id="contenedor-n1"><span id="num1">8</span></div>
+                <div class="num-main" id="signo-matematico">+</div>
+                
+                <div class="num-group">
+                    <span id="num2">5</span>
+                    <div class="ramas">/ \</div>
+                    <div class="inputs-row">
+                        <input type="number" id="parte1" placeholder="?">
+                        <input type="number" id="parte2" placeholder="?">
+                    </div>
+                </div>
+            </div>
+
+            <!-- FILA 2: MAGIA DEL 10 -->
+            <div class="math-container magic-row" id="fila-magica" style="display: none;">
+                <div class="magic-ten">10</div>
+                <div class="num-main" id="signo-magico">+</div>
+                <div class="num-main" id="num-sobrante" style="color: #ff9800; font-size: 55px;">3</div>
+                <div class="num-main">=</div>
+                <div class="result-box">
+                    <input type="number" id="resultadoFinal" disabled placeholder="?">
+                </div>
+            </div>
+
+            <button class="btn-accion" id="btnAccion" onclick="procesarAccion()">Revisar</button>
+            <div class="feedback" id="mensaje"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let n1, n2, p1_correcto, p2_correcto, resultado_correcto;
+        let modoJuego = ''; 
+        let esTutorial = false;
+        let pasoActual = 1;
+        const emoji = '🍎';
+
+        function volverMenu() {
+            document.getElementById('pantalla-juego').classList.remove('active');
+            document.getElementById('pantalla-menu').classList.add('active');
+            document.getElementById('board').className = 'game-board';
+        }
+
+        function cambiarPantallaJuego(modo) {
+            document.getElementById('pantalla-menu').classList.remove('active');
+            document.getElementById('pantalla-juego').classList.add('active');
+            
+            if (modo === 'resta') {
+                document.getElementById('board').classList.add('modo-resta');
+                document.getElementById('signo-visual').innerText = '➖';
+                document.getElementById('signo-matematico').innerText = '−';
+                document.getElementById('signo-magico').innerText = '−';
+            } else {
+                document.getElementById('board').classList.remove('modo-resta');
+                document.getElementById('signo-visual').innerText = '➕';
+                document.getElementById('signo-matematico').innerText = '+';
+                document.getElementById('signo-magico').innerText = '+';
+            }
+        }
+
+        // DIBUJAR: Ahora con parámetros para restar desde el final de la caja
+        function dibujarCaja(id, totalDibujos, max = 10, cantidadRemovidos = 0) {
+            let cont = document.getElementById(id);
+            cont.innerHTML = '';
+            for (let i = 0; i < max; i++) {
+                let celda = document.createElement('div');
+                celda.className = 'cell';
+                
+                if (i < totalDibujos) {
+                    celda.innerText = emoji;
+                    // En las restas, los últimos elementos se tachan
+                    // Ej: si hay 10 en total y quito 2, los índices 8 y 9 se tachan.
+                    if (cantidadRemovidos > 0 && i >= (totalDibujos - cantidadRemovidos)) {
+                        celda.classList.add('removed');
+                    }
+                }
+                cont.appendChild(celda);
+            }
+        }
+
+        function prepararJuego(modo) {
+            modoJuego = modo; esTutorial = false;
+            cambiarPantallaJuego(modo); generarNivel();
+        }
+
+        function iniciarTutorial(modo) {
+            modoJuego = modo; esTutorial = true;
+            cambiarPantallaJuego(modo);
+            if (modo === 'suma') { n1 = 8; n2 = 5; } else { n1 = 14; n2 = 6; }
+            
+            configurarPantallaInicial();
+            document.getElementById('parte1').disabled = true; document.getElementById('parte2').disabled = true;
+            document.getElementById('resultadoFinal').disabled = true;
+            
+            if (modo === 'suma') {
+                document.getElementById('textoProfesor').innerHTML = `<b>EJEMPLO DE SUMA:</b> Para sumar 8 + 5, es más fácil si primero convertimos el 8 en un 10.<br>¿Cuánto le falta al 8? Le faltan <b>2</b>. Haz clic en "Siguiente Paso".`;
+            } else {
+                document.getElementById('textoProfesor').innerHTML = `<b>EJEMPLO DE RESTA:</b> Para restar 14 - 6, es más fácil si primero retrocedemos hasta el 10.<br>Para que el 14 baje a 10, debemos quitarle sus <b>4</b> manzanas sueltas. Haz clic en "Siguiente Paso".`;
+            }
+            document.getElementById('btnAccion').innerText = "Siguiente Paso ➡";
+        }
+
+        function generarNivel() {
+            if (modoJuego === 'suma') {
+                n1 = Math.floor(Math.random() * 3) + 7; n2 = Math.floor(Math.random() * 5) + 4; 
+                if (n1 + n2 <= 10) { generarNivel(); return; }
+            } else {
+                n1 = Math.floor(Math.random() * 5) + 11; n2 = Math.floor(Math.random() * 5) + 4;  
+                if (n1 - n2 >= 10 || n1 - n2 <= 0) { generarNivel(); return; }
+            }
+            configurarPantallaInicial();
+        }
+
+        function configurarPantallaInicial() {
+            pasoActual = 1;
+            document.getElementById('contenedor-n1').classList.remove('cross-out');
+            document.getElementById('parte1').classList.remove('cross-out');
+            document.getElementById('fila-magica').style.display = 'none';
+            
+            if (modoJuego === 'suma') {
+                p1_correcto = 10 - n1; p2_correcto = n2 - p1_correcto; resultado_correcto = n1 + n2;
+                
+                dibujarCaja('caja1', n1); dibujarCaja('caja2', n2);
+                document.getElementById('caja1').classList.remove('full');
+                document.getElementById('titulo-caja1').innerText = "Hay " + n1;
+                document.getElementById('titulo-caja2').innerText = "Hay " + n2;
+                
+                if (!esTutorial) document.getElementById('textoProfesor').innerHTML = `Queremos llenar la primera caja para tener 10.<br>¿Cuántas manzanas le faltan al <b>${n1}</b>? Desarma el <b>${n2}</b>.`;
+            } else {
+                p1_correcto = n1 - 10; p2_correcto = n2 - p1_correcto; resultado_correcto = n1 - n2;
+                
+                dibujarCaja('caja1', 10); dibujarCaja('caja2', n1 - 10);
+                document.getElementById('caja1').classList.remove('full');
+                document.getElementById('caja1').classList.add('full'); 
+                document.getElementById('titulo-caja1').innerText = "Unidad de 10";
+                document.getElementById('titulo-caja2').innerText = "Sueltos: " + (n1 - 10);
+                
+                if (!esTutorial) document.getElementById('textoProfesor').innerHTML = `Queremos que nos quede solo la caja de 10.<br>¿Cuántos sueltos hay que quitarle al <b>${n1}</b> para que baje a 10? Desarma el <b>${n2}</b>.`;
+            }
+
+            document.getElementById('num1').innerText = n1; document.getElementById('num2').innerText = n2;
+            let i1 = document.getElementById('parte1'); let i2 = document.getElementById('parte2'); let iRes = document.getElementById('resultadoFinal');
+            i1.value = ''; i2.value = ''; iRes.value = '';
+            i1.disabled = false; i2.disabled = false; iRes.disabled = true;
+            document.getElementById('mensaje').innerText = '';
+            
+            if (!esTutorial) { document.getElementById('btnAccion').innerText = "Revisar Descomposición"; i1.focus(); }
+        }
+
+        function procesarAccion() {
+            if (esTutorial) { ejecutarPasoTutorial(); } else { revisarJuego(); }
+        }
+
+        function mostrarFilaMagica() {
+            document.getElementById('parte1').disabled = true; document.getElementById('parte2').disabled = true;
+            document.getElementById('contenedor-n1').classList.add('cross-out');
+            document.getElementById('parte1').classList.add('cross-out');
+            
+            document.getElementById('num-sobrante').innerText = p2_correcto;
+            document.getElementById('fila-magica').style.display = 'flex';
+            
+            document.getElementById('resultadoFinal').disabled = false;
+            document.getElementById('resultadoFinal').focus();
+            document.getElementById('btnAccion').innerText = "Revisar Resultado Final";
+            pasoActual = 2;
+        }
+
+        function ejecutarPasoTutorial() {
+            if (pasoActual === 1) {
+                document.getElementById('parte1').value = p1_correcto; document.getElementById('parte2').value = p2_correcto;
+                mostrarFilaMagica();
+                
+                if (modoJuego === 'suma') {
+                    dibujarCaja('caja1', 10); document.getElementById('caja1').classList.add('full');
+                    dibujarCaja('caja2', p2_correcto);
+                    document.getElementById('textoProfesor').innerHTML = `¡Mira! Juntamos el ${n1} con el ${p1_correcto} y <b>se transformaron en un 10</b>.<br>Ahora solo haz la nueva operación de abajo: <b>10 + ${p2_correcto}</b>.`;
+                } else {
+                    // Magia de la resta: tachar los sueltos Y tachar la parte de la caja de 10
+                    dibujarCaja('caja2', p1_correcto, 10, p1_correcto); // tacha los sueltos
+                    dibujarCaja('caja1', 10, 10, p2_correcto); // tacha la caja de 10 principal según la fila mágica
+                    
+                    document.getElementById('textoProfesor').innerHTML = `¡Mira! Al quitarle ${p1_correcto} sueltos bajamos a 10.<br>Pero la Fila Mágica dice que aún debemos quitar <b>${p2_correcto}</b> a ese 10. ¡Mira la caja de arriba y cuenta las que quedan vivas!`;
+                }
+                
+            } else if (pasoActual === 2) {
+                document.getElementById('resultadoFinal').value = resultado_correcto;
+                if (modoJuego === 'suma') {
+                    document.getElementById('textoProfesor').innerHTML = `¡Excelente! 10 + ${p2_correcto} = <b>${resultado_correcto}</b>.<br>¡Acabas de aprender la magia de sumar con 10!`;
+                } else {
+                    document.getElementById('textoProfesor').innerHTML = `¡Así es! Si a 10 le quitamos ${p2_correcto}, nos quedan <b>${resultado_correcto}</b> manzanas sin tachar.<br>¡Acabas de aprender la magia de restar volviendo al 10!`;
+                }
+                document.getElementById('btnAccion').innerText = "Volver al Menú"; pasoActual = 3;
+            } else if (pasoActual === 3) { volverMenu(); }
+        }
+
+        function revisarJuego() {
+            let msj = document.getElementById('mensaje');
+            if (pasoActual === 1) {
+                let p1 = parseInt(document.getElementById('parte1').value); let p2 = parseInt(document.getElementById('parte2').value);
+                if (isNaN(p1) || isNaN(p2)) { msj.innerText = "¡Escribe los números primero! ✏️"; msj.className = "feedback wrong"; return; }
+
+                if (p1 === p1_correcto && p2 === p2_correcto) {
+                    msj.innerText = "¡Bien hecho!"; msj.className = "feedback correct";
+                    mostrarFilaMagica();
+                    
+                    if (modoJuego === 'suma') {
+                        dibujarCaja('caja1', 10); document.getElementById('caja1').classList.add('full');
+                        dibujarCaja('caja2', p2_correcto);
+                        document.getElementById('titulo-caja1').innerHTML = "¡Caja de 10 llena! 🌟";
+                        document.getElementById('textoProfesor').innerHTML = `¡Súper! Juntaste el ${n1} y el ${p1_correcto} para formar un <b>10</b>. <br>Ahora resuelve la operación de la Fila Mágica: <b>10 + ${p2_correcto}</b>.`;
+                    } else {
+                        // LA MAGIA VISUAL EN LA RESTA DEL JUEGO
+                        dibujarCaja('caja2', p1_correcto, 10, p1_correcto); // tacha los sueltos
+                        dibujarCaja('caja1', 10, 10, p2_correcto); // tacha lo que pide la fila magica
+                        
+                        document.getElementById('titulo-caja2').innerText = "¡Suprimidos!";
+                        document.getElementById('textoProfesor').innerHTML = `¡Genial! Quitaste los ${p1_correcto} sueltos. <br>Ahora mira la <b>Fila Mágica</b>: debes quitarle <b>${p2_correcto}</b> a la caja de 10. ¡Cuenta las manzanas vivas que quedan arriba!`;
+                    }
+                } else if (p1 + p2 !== n2) {
+                    msj.innerText = `Los dos números de abajo deben sumar ${n2} 🧐`; msj.className = "feedback wrong";
+                } else {
+                    msj.innerText = modoJuego === 'suma' ? `Fíjate cuánto le falta al ${n1} para llegar a 10.` : `Fíjate cuántos sueltos debes quitarle al ${n1} para que quede en 10.`;
+                    msj.className = "feedback wrong";
+                }
+            } else if (pasoActual === 2) {
+                let res = parseInt(document.getElementById('resultadoFinal').value);
+                if (res === resultado_correcto) {
+                    msj.innerText = "¡Logrado! 🌟🌟🌟"; msj.className = "feedback correct";
+                    document.getElementById('btnAccion').style.display = 'none';
+                    document.getElementById('textoProfesor').innerHTML = `¡Lo hiciste de maravilla! Preparando el siguiente desafío...`;
+                    setTimeout(() => { document.getElementById('btnAccion').style.display = 'inline-block'; generarNivel(); }, 4000);
+                } else {
+                    msj.innerText = modoJuego === 'suma' ? "Suma bien los números de la Fila Mágica 💪" : "Cuenta de nuevo las manzanas vivas 💪";
+                    msj.className = "feedback wrong";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
