@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magia del 10 - Totalmente Interactivo y Táctil</title>
+    <title>Magia del 10 - Interacción 1 a 1</title>
     <style>
         body { 
             font-family: 'Comic Sans MS', cursive, sans-serif; 
@@ -82,18 +82,13 @@
         .cell.interactive:hover { transform: scale(1.1); border-color: #ff9800; }
         .cell.interactive:active { transform: scale(0.9); }
         
-        /* Indicador visual de toque (animación tipo "pop") */
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
         .pop-anim { animation: pop 0.3s ease; }
 
-        /* Efectos visuales de estado */
-        .cell.moved { opacity: 0.2; transform: scale(0.8); } /* Suma: se fue a la otra caja */
+        /* Efectos visuales de las manzanas */
+        .cell.moved { opacity: 0.2; transform: scale(0.8); }
         
-        .cell.removed { opacity: 0.4; transform: scale(0.85); filter: grayscale(100%); position: relative; } /* Resta: tachada */
+        .cell.removed { opacity: 0.4; transform: scale(0.85); filter: grayscale(100%); position: relative; }
         .cell.removed::after {
             content: ''; position: absolute; width: 100%; height: 5px; background-color: #e53935;
             transform: rotate(-45deg); border-radius: 3px; box-shadow: 0 0 3px rgba(255,255,255,0.8);
@@ -118,9 +113,7 @@
             border: 3px dashed #ab47bc; border-radius: 12px;
             background-color: #fdf3ff; color: #4a148c; font-family: inherit;
         }
-        /* Resaltar visualmente qué input se está llenando con los toques */
         input.active-fill { border-style: solid; border-color: #ff9800; background-color: #fff3e0; box-shadow: 0 0 10px rgba(255, 152, 0, 0.5); transition: all 0.3s;}
-        
         input:focus { outline: none; }
         input:disabled { background-color: #eeeeee; border: 3px solid #bdbdbd; color: #9e9e9e; }
         
@@ -158,11 +151,10 @@
 <body>
 
     <h1>✨ El Truco del 10 ✨</h1>
-    <p class="subtitle">¡Toca las manzanas para resolver!</p>
+    <p class="subtitle">¡Toca exactamente la manzana que quieres quitar o mover!</p>
     
     <div class="game-board" id="board">
         
-        <!-- PANTALLA MENÚ -->
         <div id="pantalla-menu" class="screen active">
             <h2>¿Qué quieres hacer hoy?</h2>
             <div class="menu-buttons">
@@ -174,17 +166,15 @@
             </div>
         </div>
 
-        <!-- PANTALLA JUEGO -->
         <div id="pantalla-juego" class="screen">
             <button class="btn-volver" onclick="volverMenu()">⬅ Volver al Menú</button>
             
             <div class="teacher-box">
-                <div class="owl" onclick="hablarBúho()" style="cursor:pointer;" title="Haz clic en el búho para escucharlo">🦉</div>
+                <div class="owl" onclick="hablarBúho()" style="cursor:pointer;">🦉</div>
                 <div id="textoProfesor" style="flex-grow: 1;">...</div>
-                <button class="btn-hablar" onclick="hablarBúho()" title="Escuchar">🔊</button>
+                <button class="btn-hablar" onclick="hablarBúho()">🔊</button>
             </div>
             
-            <!-- CAJAS DE 10 -->
             <div class="visual-area">
                 <div class="frame-container">
                     <div class="frame-title" id="titulo-caja1">Primera Caja</div>
@@ -197,7 +187,6 @@
                 </div>
             </div>
 
-            <!-- FILA 1: DESCOMPOSICIÓN -->
             <div class="math-container" id="fila-descomposicion">
                 <div class="num-main" id="contenedor-n1"><span id="num1">8</span></div>
                 <div class="num-main" id="signo-matematico">+</div>
@@ -206,8 +195,8 @@
                     <span id="num2">5</span>
                     <div class="ramas">/ \</div>
                     <div class="inputs-row">
-                        <input type="number" id="parte1" placeholder="?" min="0" oninput="sincronizarInputDesdeTeclado()">
-                        <input type="number" id="parte2" placeholder="?" min="0" oninput="sincronizarInputDesdeTeclado()">
+                        <input type="number" id="parte1" placeholder="?" min="0" oninput="sincronizarTeclado()">
+                        <input type="number" id="parte2" placeholder="?" min="0" oninput="sincronizarTeclado()">
                     </div>
                     <div class="labels-row">
                         <div class="lbl-box" id="lbl1"></div>
@@ -216,7 +205,6 @@
                 </div>
             </div>
 
-            <!-- FILA 2: MAGIA DEL 10 -->
             <div class="math-container magic-row" id="fila-magica" style="display: none;">
                 <div class="magic-ten">10</div>
                 <div class="num-main" id="signo-magico">+</div>
@@ -230,7 +218,6 @@
             <button class="btn-accion" id="btnAccion" onclick="procesarAccion()">Revisar</button>
             <div class="feedback" id="mensaje"></div>
         </div>
-
     </div>
 
     <script>
@@ -240,17 +227,19 @@
         let pasoActual = 1;
         const emoji = '🍎';
         
-        // Variables para el control táctil
+        // ¡NUEVO!: Matrices de estado individual para recordar qué manzana exacta se tocó
+        let estado_caja1 = [];
+        let estado_caja2 = [];
+        
         let toques_p1 = 0;
         let toques_p2 = 0;
-        let estado_tactil = 'llenando_p1'; // 'llenando_p1', 'llenando_p2', 'bloqueado'
+        let estado_tactil = 'llenando_p1'; 
 
         // --- VOZ ---
         function cambiarTextoYHablar(nuevoHTML) {
             document.getElementById('textoProfesor').innerHTML = nuevoHTML;
             hablarBúho();
         }
-
         function hablarBúho() {
             window.speechSynthesis.cancel();
             let textoLimpio = document.getElementById('textoProfesor').innerHTML.replace(/<[^>]*>?/gm, ' ');
@@ -269,7 +258,6 @@
         function cambiarPantallaJuego(modo) {
             document.getElementById('pantalla-menu').classList.remove('active');
             document.getElementById('pantalla-juego').classList.add('active');
-            
             if (modo === 'resta') {
                 document.getElementById('board').classList.add('modo-resta');
                 document.getElementById('signo-visual').innerText = '➖';
@@ -288,161 +276,208 @@
         }
 
         // ==========================================
-        // SISTEMA TÁCTIL E INTERACTIVO
+        // MOTOR DE DIBUJO Y ESTADO EXACTO (1 A 1)
         // ==========================================
-        
-        // Función principal para redibujar basándonos en los toques
-        function actualizarVisualesDesdeToques() {
+        function configurarEstadosIniciales() {
+            estado_caja1 = Array(10).fill('vacia');
+            estado_caja2 = Array(10).fill('vacia');
+            
+            if (modoJuego === 'suma') {
+                // En suma, la caja 2 tiene n2 manzanas.
+                for(let i = 0; i < n2; i++) estado_caja2[i] = 'normal';
+                // La caja 1 no necesita estado porque se llena sola al mover de la caja 2
+            } else {
+                // En resta, la caja 1 tiene 10, la caja 2 tiene los sueltos.
+                for(let i = 0; i < 10; i++) estado_caja1[i] = 'normal';
+                let sueltos = n1 - 10;
+                for(let i = 0; i < sueltos; i++) estado_caja2[i] = 'normal';
+            }
+        }
+
+        function renderizarCajas() {
             let caja1 = document.getElementById('caja1');
             let caja2 = document.getElementById('caja2');
-            
-            // Actualizar los inputs con los valores táctiles (si el usuario no está escribiendo manualmente)
-            document.getElementById('parte1').value = toques_p1 > 0 ? toques_p1 : '';
-            document.getElementById('parte2').value = toques_p2 > 0 ? toques_p2 : '';
+            caja1.innerHTML = ''; caja2.innerHTML = '';
 
-            // Efectos visuales de qué input se está llenando
+            // Luces indicadoras de en qué input vamos
             document.getElementById('parte1').classList.toggle('active-fill', estado_tactil === 'llenando_p1' && pasoActual === 1);
             document.getElementById('parte2').classList.toggle('active-fill', estado_tactil === 'llenando_p2' && pasoActual === 1);
 
-            caja1.innerHTML = '';
-            caja2.innerHTML = '';
-
+            // DIBUJAR CAJA 1
+            let fill_count_c1 = modoJuego === 'suma' ? n1 + toques_p1 : 10;
+            for(let i=0; i<10; i++) {
+                let celda = document.createElement('div');
+                celda.className = 'cell';
+                
+                if (modoJuego === 'suma') {
+                    if (i < fill_count_c1) celda.innerText = emoji;
+                } else {
+                    if (estado_caja1[i] !== 'vacia') {
+                        celda.innerText = emoji;
+                        if (estado_caja1[i] === 'removed') celda.classList.add('removed');
+                        
+                        // Permitir tocar/destocar la caja de 10 en la resta
+                        if (pasoActual === 1 && !esTutorial) {
+                            if (estado_caja1[i] === 'normal' && estado_tactil === 'llenando_p2' && (toques_p1 + toques_p2 < n2)) {
+                                celda.classList.add('interactive');
+                            } else if (estado_caja1[i] === 'removed') {
+                                celda.classList.add('interactive'); // ¡Permite deshacer el error!
+                            }
+                            celda.onclick = () => procesarToqueManzana('caja1', i);
+                        }
+                    }
+                }
+                caja1.appendChild(celda);
+            }
             if (modoJuego === 'suma') {
-                // SUMA: toques_p1 mueve manzanas de Caja 2 a Caja 1. (toques_p2 es el resto)
-                let manzanasEnCaja1 = n1 + toques_p1;
-                let manzanasRestantesCaja2 = n2 - toques_p1;
-
-                // Dibujar Caja 1 (Recibe las manzanas)
-                for (let i = 0; i < 10; i++) {
-                    let celda = document.createElement('div');
-                    celda.className = 'cell';
-                    if (i < manzanasEnCaja1) celda.innerText = emoji;
-                    caja1.appendChild(celda);
-                }
-                
-                // Brillar si formó el 10
-                if (manzanasEnCaja1 === 10) caja1.classList.add('full'); else caja1.classList.remove('full');
-
-                // Dibujar Caja 2 (Origen interactivo)
-                for (let i = 0; i < 10; i++) {
-                    let celda = document.createElement('div');
-                    celda.className = 'cell';
-                    
-                    if (i < manzanasRestantesCaja2) {
-                        celda.innerText = emoji;
-                        // Solo son interactivas si aún no llenamos la caja 1
-                        if (manzanasEnCaja1 < 10 && !esTutorial && pasoActual === 1) {
-                            celda.classList.add('interactive');
-                            celda.onclick = () => procesarToqueInteractivo('suma');
-                        }
-                    } else if (i < n2) {
-                        // Estas son las que se movieron a la Caja 1 (efecto fantasma)
-                        celda.innerText = emoji;
-                        celda.classList.add('moved'); 
-                    }
-                    caja2.appendChild(celda);
-                }
-                
-                // En suma, si ya llenó la caja 1, autocompletamos el sobrante en parte2
-                if (manzanasEnCaja1 === 10 && toques_p1 === p1_correcto && toques_p2 === 0 && pasoActual === 1 && !esTutorial) {
-                    toques_p2 = manzanasRestantesCaja2;
-                    document.getElementById('parte2').value = toques_p2;
-                    estado_tactil = 'bloqueado'; // Ya terminó la fase táctil
-                    actualizarVisualesDesdeToques(); // Refrescar para quitar highlight
-                    hablarBúho("¡Excelente! Haz clic en Revisar Descomposición."); // Mensaje rápido sin cambiar texto visual
-                }
-
+                if (fill_count_c1 === 10) caja1.classList.add('full'); else caja1.classList.remove('full');
             } else {
-                // RESTA: toques_p1 tacha de Caja 2. toques_p2 tacha de Caja 1.
-                let sueltos = n1 - 10;
-
-                // Dibujar Caja 2 (Sueltos)
-                for (let i = 0; i < 10; i++) {
-                    let celda = document.createElement('div');
-                    celda.className = 'cell';
-                    
-                    if (i < sueltos) {
-                        celda.innerText = emoji;
-                        if (i >= sueltos - toques_p1) {
-                            celda.classList.add('removed'); // Tachada
-                        } else if (!esTutorial && pasoActual === 1 && estado_tactil === 'llenando_p1') {
-                            celda.classList.add('interactive');
-                            celda.onclick = () => procesarToqueInteractivo('resta_sueltos');
-                        }
-                    }
-                    caja2.appendChild(celda);
-                }
-
-                // Dibujar Caja 1 (El 10 principal)
-                for (let i = 0; i < 10; i++) {
-                    let celda = document.createElement('div');
-                    celda.className = 'cell';
-                    celda.innerText = emoji;
-                    
-                    if (i >= 10 - toques_p2) {
-                        celda.classList.add('removed'); // Tachada
-                    } else if (!esTutorial && pasoActual === 1 && estado_tactil === 'llenando_p2' && toques_p1 + toques_p2 < n2) {
-                        // Solo permite tachar si ya terminó los sueltos y aún faltan por tachar del total(n2)
-                        celda.classList.add('interactive');
-                        celda.onclick = () => procesarToqueInteractivo('resta_diez');
-                    }
-                    caja1.appendChild(celda);
-                }
-
                 if (toques_p2 > 0) caja1.classList.remove('full'); else caja1.classList.add('full');
+            }
+
+            // DIBUJAR CAJA 2
+            for(let i=0; i<10; i++) {
+                let celda = document.createElement('div');
+                celda.className = 'cell';
+                
+                if (estado_caja2[i] !== 'vacia') {
+                    celda.innerText = emoji;
+                    if (estado_caja2[i] === 'moved') celda.classList.add('moved');
+                    if (estado_caja2[i] === 'removed') celda.classList.add('removed');
+                    
+                    if (pasoActual === 1 && !esTutorial) {
+                        if (modoJuego === 'suma') {
+                            if (estado_caja2[i] === 'normal' && fill_count_c1 < 10) celda.classList.add('interactive');
+                            else if (estado_caja2[i] === 'moved') celda.classList.add('interactive'); // Permitir deshacer
+                        } else {
+                            if (estado_caja2[i] === 'normal' && estado_tactil === 'llenando_p1') celda.classList.add('interactive');
+                            else if (estado_caja2[i] === 'removed') celda.classList.add('interactive'); // Permitir deshacer
+                        }
+                        celda.onclick = () => procesarToqueManzana('caja2', i);
+                    }
+                }
+                caja2.appendChild(celda);
             }
         }
 
-        function procesarToqueInteractivo(accion) {
-            // Animación de pop en el input correspondiente
-            let inputId = (accion === 'resta_diez') ? 'parte2' : 'parte1';
+        // LÓGICA AL TOCAR LA MANZANA EXACTA
+        function procesarToqueManzana(caja, index) {
+            if (pasoActual !== 1 || esTutorial) return;
+            
+            // Efecto visual de pop en el input
+            let inputId = (modoJuego === 'resta' && caja === 'caja1') ? 'parte2' : 'parte1';
             let inputEl = document.getElementById(inputId);
             inputEl.classList.remove('pop-anim');
-            void inputEl.offsetWidth; // Trigger reflow
+            void inputEl.offsetWidth; 
             inputEl.classList.add('pop-anim');
 
-            if (accion === 'suma') {
-                toques_p1++;
-                // Reproducir un sonido cortito de "pop" genérico usando web audio api si se quisiera (omitido por simplicidad)
-            } else if (accion === 'resta_sueltos') {
-                toques_p1++;
-                let sueltos = n1 - 10;
-                // Si tachó todos los sueltos, cambia el estado a tachar el 10
-                if (toques_p1 === sueltos) {
-                    estado_tactil = 'llenando_p2';
+            if (modoJuego === 'suma') {
+                if (caja === 'caja2') {
+                    if (estado_caja2[index] === 'normal') {
+                        if (n1 + toques_p1 < 10) estado_caja2[index] = 'moved';
+                    } else if (estado_caja2[index] === 'moved') {
+                        estado_caja2[index] = 'normal'; // Deshacer
+                    }
                 }
-            } else if (accion === 'resta_diez') {
-                toques_p2++;
-                // Si ya tachó el total necesario (n2), bloquea más toques
-                if (toques_p1 + toques_p2 === n2) {
+            } else { // Resta
+                if (caja === 'caja2') {
+                    if (estado_caja2[index] === 'normal') {
+                        estado_caja2[index] = 'removed';
+                    } else if (estado_caja2[index] === 'removed') {
+                        estado_caja2[index] = 'normal'; // Deshacer
+                    }
+                } else if (caja === 'caja1') {
+                    let sueltos = n1 - 10;
+                    if (estado_caja1[index] === 'normal') {
+                        if (toques_p1 === sueltos && (toques_p1 + toques_p2 < n2)) {
+                            estado_caja1[index] = 'removed';
+                        } else if (toques_p1 < sueltos) {
+                            // Si intenta tocar la caja de 10 antes de terminar los sueltos, le avisamos
+                            document.getElementById('mensaje').innerText = "¡Tacha primero todas las manzanas sueltas!";
+                            document.getElementById('mensaje').className = "feedback wrong";
+                        }
+                    } else if (estado_caja1[index] === 'removed') {
+                        estado_caja1[index] = 'normal'; // Deshacer
+                    }
+                }
+            }
+            actualizarDatosYEstados();
+        }
+
+        // CALCULA Y ACTUALIZA LOS INPUTS BASADOS EN LO QUE EL NIÑO TOCÓ
+        function actualizarDatosYEstados() {
+            if (modoJuego === 'suma') {
+                toques_p1 = estado_caja2.filter(e => e === 'moved').length;
+                document.getElementById('parte1').value = toques_p1 > 0 ? toques_p1 : '';
+                
+                if (n1 + toques_p1 === 10) {
+                    toques_p2 = n2 - toques_p1;
+                    document.getElementById('parte2').value = toques_p2;
+                    estado_tactil = 'bloqueado';
+                    if (!esTutorial && pasoActual === 1) hablarBúho("¡Excelente! Haz clic en Revisar.");
+                } else {
+                    toques_p2 = 0; document.getElementById('parte2').value = '';
+                    estado_tactil = 'llenando_p1';
+                }
+            } else {
+                toques_p1 = estado_caja2.filter(e => e === 'removed').length;
+                toques_p2 = estado_caja1.filter(e => e === 'removed').length;
+                
+                document.getElementById('parte1').value = toques_p1 > 0 ? toques_p1 : '';
+                document.getElementById('parte2').value = toques_p2 > 0 ? toques_p2 : '';
+                
+                let sueltos = n1 - 10;
+                if (toques_p1 < sueltos) {
+                    estado_tactil = 'llenando_p1';
+                } else if (toques_p1 === sueltos && toques_p1 + toques_p2 < n2) {
+                    estado_tactil = 'llenando_p2';
+                } else {
                     estado_tactil = 'bloqueado';
                 }
             }
-            
-            actualizarVisualesDesdeToques();
+            renderizarCajas();
         }
 
-        // Permite que si el niño prefiere escribir en el teclado, también funcione
-        function sincronizarInputDesdeTeclado() {
+        // SI EL NIÑO PREFIERE ESCRIBIR EN EL TECLADO, EL JUEGO TACHA AUTOMÁTICAMENTE
+        function sincronizarTeclado() {
             if (pasoActual !== 1 || esTutorial) return;
-            
             let val1 = parseInt(document.getElementById('parte1').value);
             let val2 = parseInt(document.getElementById('parte2').value);
             
             toques_p1 = isNaN(val1) || val1 < 0 ? 0 : val1;
             toques_p2 = isNaN(val2) || val2 < 0 ? 0 : val2;
             
-            // Ajustar estado táctil según lo escrito para no bloquearlo
-            if (modoJuego === 'resta') {
-                if (toques_p1 >= (n1 - 10)) estado_tactil = 'llenando_p2';
-                else estado_tactil = 'llenando_p1';
+            if (modoJuego === 'suma') {
+                let count = 0;
+                for(let i=0; i<10; i++) {
+                    if (estado_caja2[i] !== 'vacia') {
+                        if (count < toques_p1) { estado_caja2[i] = 'moved'; count++; }
+                        else { estado_caja2[i] = 'normal'; }
+                    }
+                }
+            } else {
+                let count_c2 = 0;
+                for(let i=9; i>=0; i--) { // Resta desde el final visualmente
+                    if (estado_caja2[i] !== 'vacia') {
+                        if (count_c2 < toques_p1) { estado_caja2[i] = 'removed'; count_c2++; }
+                        else { estado_caja2[i] = 'normal'; }
+                    }
+                }
+                let count_c1 = 0;
+                for(let i=9; i>=0; i--) {
+                    if (estado_caja1[i] !== 'vacia') {
+                        if (count_c1 < toques_p2) { estado_caja1[i] = 'removed'; count_c1++; }
+                        else { estado_caja1[i] = 'normal'; }
+                    }
+                }
             }
-
-            actualizarVisualesDesdeToques();
+            actualizarDatosYEstados();
         }
+
+
         // ==========================================
-
-
+        // FLUJO DEL JUEGO
+        // ==========================================
         function prepararJuego(modo) {
             modoJuego = modo; esTutorial = false;
             cambiarPantallaJuego(modo); generarNivel();
@@ -452,16 +487,12 @@
             modoJuego = modo; esTutorial = true;
             cambiarPantallaJuego(modo);
             if (modo === 'suma') { n1 = 8; n2 = 5; } else { n1 = 14; n2 = 6; }
-            
             configurarPantallaInicial();
             document.getElementById('parte1').disabled = true; document.getElementById('parte2').disabled = true;
             document.getElementById('resultadoFinal').disabled = true;
             
-            if (modo === 'suma') {
-                cambiarTextoYHablar(`<b>EJEMPLO DE SUMA:</b> Para sumar 8 más 5, primero convertimos el 8 en un 10. ¿Cuánto le falta al 8? Le faltan <b>2</b>. Haz clic en "Siguiente Paso".`);
-            } else {
-                cambiarTextoYHablar(`<b>EJEMPLO DE RESTA:</b> Tenemos que tachar <b>6</b> manzanas en total. Primero, desarmemos el 6 tachando las <b>4</b> manzanas sueltas. Haz clic en "Siguiente".`);
-            }
+            if (modo === 'suma') cambiarTextoYHablar(`<b>EJEMPLO DE SUMA:</b> Para sumar 8 más 5, convertimos el 8 en 10 moviendo <b>2</b> manzanas. Haz clic en "Siguiente Paso".`);
+            else cambiarTextoYHablar(`<b>EJEMPLO DE RESTA:</b> Para restar 14 menos 6, tachamos primero las <b>4</b> manzanas sueltas. Haz clic en "Siguiente".`);
             document.getElementById('btnAccion').innerText = "Siguiente Paso ➡";
         }
 
@@ -477,38 +508,28 @@
         }
 
         function configurarPantallaInicial() {
-            pasoActual = 1;
-            toques_p1 = 0;
-            toques_p2 = 0;
-            estado_tactil = 'llenando_p1';
-            
+            pasoActual = 1; toques_p1 = 0; toques_p2 = 0; estado_tactil = 'llenando_p1';
             document.getElementById('contenedor-n1').classList.remove('cross-out');
             document.getElementById('parte1').classList.remove('cross-out');
             document.getElementById('fila-magica').style.display = 'none';
             document.getElementById('mensaje').innerText = '';
-            document.getElementById('parte1').disabled = false; 
-            document.getElementById('parte2').disabled = false; 
-            document.getElementById('resultadoFinal').disabled = true;
-            document.getElementById('resultadoFinal').value = '';
+            document.getElementById('parte1').disabled = false; document.getElementById('parte2').disabled = false; 
+            document.getElementById('resultadoFinal').disabled = true; document.getElementById('resultadoFinal').value = '';
             
             if (modoJuego === 'suma') {
                 p1_correcto = 10 - n1; p2_correcto = n2 - p1_correcto; resultado_correcto = n1 + n2;
-                document.getElementById('titulo-caja1').innerText = "Hay " + n1;
-                document.getElementById('titulo-caja2').innerText = "Hay " + n2;
-                
-                if (!esTutorial) cambiarTextoYHablar(`<b>¡Toca las manzanas de la segunda caja para pasarlas a la primera!</b> Llena la primera caja hasta tener 10.`);
+                document.getElementById('titulo-caja1').innerText = "Hay " + n1; document.getElementById('titulo-caja2').innerText = "Hay " + n2;
+                if (!esTutorial) cambiarTextoYHablar(`<b>¡Toca cualquier manzana de la segunda caja para moverla!</b> Llena la primera caja hasta tener 10.`);
             } else {
                 p1_correcto = n1 - 10; p2_correcto = n2 - p1_correcto; resultado_correcto = n1 - n2;
-                document.getElementById('titulo-caja1').innerText = "Unidad de 10";
-                document.getElementById('titulo-caja2').innerText = "Sueltos: " + (n1 - 10);
-                
-                if (!esTutorial) cambiarTextoYHablar(`¡Atención! Tenemos que tachar <b>${n2}</b> manzanas en total. <b>Toca las manzanas sueltas de la derecha para empezar a tachar.</b>`);
+                document.getElementById('titulo-caja1').innerText = "Unidad de 10"; document.getElementById('titulo-caja2').innerText = "Sueltos: " + (n1 - 10);
+                if (!esTutorial) cambiarTextoYHablar(`¡Atención! Tenemos que tachar <b>${n2}</b> manzanas en total. <b>Toca las manzanas sueltas para tacharlas.</b> Si te equivocas, vuelve a tocarlas.`);
             }
 
             document.getElementById('num1').innerText = n1; document.getElementById('num2').innerText = n2;
             
-            // Dibujar la configuración inicial limpia
-            actualizarVisualesDesdeToques();
+            configurarEstadosIniciales();
+            renderizarCajas();
             
             if (!esTutorial) { document.getElementById('btnAccion').innerText = "Revisar Descomposición"; }
         }
@@ -524,7 +545,6 @@
             document.getElementById('num-sobrante').innerText = p2_correcto;
             document.getElementById('fila-magica').style.display = 'flex';
             
-            // Quitar highlights
             document.getElementById('parte1').classList.remove('active-fill');
             document.getElementById('parte2').classList.remove('active-fill');
             estado_tactil = 'bloqueado';
@@ -537,23 +557,23 @@
 
         function ejecutarPasoTutorial() {
             if (pasoActual === 1) {
-                toques_p1 = p1_correcto; toques_p2 = p2_correcto;
-                actualizarVisualesDesdeToques(); // Reflejar los cambios automáticos
+                // Tachar para tutorial
+                if(modoJuego === 'suma') {
+                    for(let i=0; i<p1_correcto; i++) estado_caja2[i] = 'moved';
+                } else {
+                    for(let i=0; i<p1_correcto; i++) estado_caja2[i] = 'removed';
+                    for(let i=9; i>=10-p2_correcto; i--) estado_caja1[i] = 'removed';
+                }
+                actualizarDatosYEstados(); 
                 mostrarFilaMagica();
                 
-                if (modoJuego === 'suma') {
-                    cambiarTextoYHablar(`¡Mira! Juntamos el ${n1} con el ${p1_correcto} y <b>se transformaron en un 10</b>. Ahora solo haz la nueva operación de abajo: <b>10 más ${p2_correcto}</b>.`);
-                } else {
-                    cambiarTextoYHablar(`Como debíamos tachar ${n2} en total, tachamos los ${p1_correcto} sueltos y luego le tachamos ${p2_correcto} al número 10. ¡Cuenta las manzanas vivas!`);
-                }
+                if (modoJuego === 'suma') cambiarTextoYHablar(`¡Mira! Juntamos el ${n1} con el ${p1_correcto} y <b>se transformaron en un 10</b>. Ahora resuelve la nueva operación: <b>10 más ${p2_correcto}</b>.`);
+                else cambiarTextoYHablar(`Tachamos los ${p1_correcto} sueltos y luego le tachamos ${p2_correcto} al número 10. ¡Cuenta las manzanas vivas!`);
                 
             } else if (pasoActual === 2) {
                 document.getElementById('resultadoFinal').value = resultado_correcto;
-                if (modoJuego === 'suma') {
-                    cambiarTextoYHablar(`¡Excelente! 10 más ${p2_correcto} es igual a <b>${resultado_correcto}</b>.`);
-                } else {
-                    cambiarTextoYHablar(`¡Así es! Si a 10 le quitamos ${p2_correcto}, nos quedan <b>${resultado_correcto}</b> manzanas vivas.`);
-                }
+                if (modoJuego === 'suma') cambiarTextoYHablar(`¡Excelente! 10 más ${p2_correcto} es igual a <b>${resultado_correcto}</b>.`);
+                else cambiarTextoYHablar(`¡Así es! Si a 10 le quitamos ${p2_correcto}, nos quedan <b>${resultado_correcto}</b> manzanas vivas.`);
                 document.getElementById('btnAccion').innerText = "Volver al Menú"; pasoActual = 3;
             } else if (pasoActual === 3) { volverMenu(); }
         }
@@ -561,7 +581,6 @@
         function revisarJuego() {
             let msj = document.getElementById('mensaje');
             if (pasoActual === 1) {
-                // Usamos los valores de toques (que se sincronizan con los inputs)
                 if (toques_p1 === 0 && toques_p2 === 0 && document.getElementById('parte1').value === '') { 
                     msj.innerText = modoJuego === 'suma' ? "¡Toca las manzanas para moverlas!" : "¡Toca las manzanas para tacharlas!"; 
                     msj.className = "feedback wrong"; return; 
@@ -576,7 +595,7 @@
                         cambiarTextoYHablar(`¡Súper! Juntaste el ${n1} y el ${p1_correcto} para formar un <b>10</b>. Ahora resuelve la operación de la Fila Mágica: <b>10 más ${p2_correcto}</b>.`);
                     } else {
                         document.getElementById('titulo-caja2').innerText = "¡Suprimidos!";
-                        cambiarTextoYHablar(`¡Misión cumplida! Si cuentas las cruces rojas, verás que tachaste exactamente <b>${n2}</b> manzanas en total. Ahora resuelve la Fila Mágica contando las manzanas vivas.`);
+                        cambiarTextoYHablar(`¡Misión cumplida! Si cuentas las cruces rojas, tachaste exactamente <b>${n2}</b> manzanas en total. Ahora resuelve la Fila Mágica contando las manzanas vivas.`);
                     }
                 } else if (toques_p1 + toques_p2 !== n2) {
                     msj.innerText = `¡Cuidado! En total debes ${modoJuego === 'suma' ? 'mover y separar' : 'tachar'} ${n2} manzanas, no ${toques_p1 + toques_p2}.`; msj.className = "feedback wrong";
